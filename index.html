@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Chicken0248 CTF (Clone)</title>
+  <meta name="description" content="Free DFIR and security challenges clone by Chicken0248 style.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐔</text></svg>">
+  <script>
+    try {
+      var t = localStorage.getItem('ctf-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
+  <style>
+    :root {
+      --page: #17191d;
+      --surface: #202329;
+      --field: #131519;
+      --ink: #f2f3f4;
+      --muted: #aeb3ba;
+      --line: #3b4048;
+      --accent: #e6b457;
+      --accent-text: #e6b457;
+      --success: #91d1a8;
+      --danger: #ff978a;
+      --violet: #b9a6fa;
+      --ok-bg: #53be6f2e;
+      --ok-line: #a6f3bd;
+      --ok-ink: #d3ffe0;
+    }
+    html[data-theme=light] {
+      --page: #f3f5f6;
+      --surface: #fff;
+      --field: #fff;
+      --ink: #18232d;
+      --muted: #596873;
+      --line: #c7d0d6;
+      --accent: #f0b64f;
+      --accent-text: #8a6410;
+      --success: #237747;
+      --danger: #b63c33;
+      --violet: #6b4fc4;
+      --ok-bg: #e4f6e9;
+      --ok-line: #4c9d68;
+      --ok-ink: #145c32;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--page);
+      margin: 0;
+      font: 16px/1.5 "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    .page { width: min(100% - 64px, 1260px); margin: 0 auto; }
+    a { color: var(--accent-text); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Header */
+    .event-bar {
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      min-height: 62px;
+      display: flex;
+    }
+    .event-name {
+      color: var(--ink);
+      letter-spacing: .025em;
+      text-transform: uppercase;
+      font-size: .85rem;
+      font-weight: 760;
+    }
+    .event-name:hover { text-decoration: none; }
+    .event-name span { color: var(--accent-text); }
+    .event-actions {
+      align-items: center;
+      gap: 18px;
+      font-size: .8rem;
+      display: flex;
+    }
+    .event-actions a { color: var(--muted); }
+    .event-actions a:hover { color: var(--accent-text); text-decoration: none; }
+    .theme-toggle {
+      border: 1px solid var(--line);
+      min-height: 28px;
+      color: var(--muted);
+      cursor: pointer;
+      background: transparent;
+      border-radius: 4px;
+      padding: 0 9px;
+      font: 650 .7rem "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+    }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent-text); }
+
+    /* Intro */
+    .case-intro {
+      border-bottom: 1px solid var(--line);
+      text-align: center;
+      padding: 52px 0 44px;
+    }
+    .case-kicker {
+      color: var(--accent-text);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: .72rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .case-intro h1 {
+      font-size: clamp(2.1rem, 5vw, 3.1rem);
+      font-weight: 780;
+      letter-spacing: -.02em;
+      margin: 0 0 16px;
+      line-height: 1.15;
+    }
+    .case-intro p {
+      color: var(--muted);
+      max-width: 540px;
+      margin: 0 auto 8px;
+      font-size: .95rem;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 28px 0 22px;
+    }
+    .toolbar input[type=search] {
+      flex: 1;
+      min-width: 200px;
+      background: var(--field);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font: inherit;
+      outline: none;
+    }
+    .toolbar input[type=search]:focus { border-color: var(--accent); }
+    .toolbar select {
+      background: var(--field);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .count {
+      color: var(--muted);
+      font-size: .85rem;
+      margin-left: auto;
+    }
+
+    /* Cards grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 18px 18px 16px;
+      display: block;
+      color: inherit;
+      transition: border-color .15s, transform .12s;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      text-decoration: none;
+      transform: translateY(-2px);
+    }
+    .card .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .pill {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-transform: lowercase;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid;
+    }
+    .pill.easy { color: #3d9b6a; border-color: #3d9b6a55; background: #3d9b6a14; }
+    .pill.medium { color: #c48a2a; border-color: #c48a2a55; background: #c48a2a14; }
+    .pill.hard { color: #d05a4a; border-color: #d05a4a55; background: #d05a4a14; }
+    html[data-theme=light] .pill.easy { color: #1e7a4a; }
+    html[data-theme=light] .pill.medium { color: #9a6a10; }
+    html[data-theme=light] .pill.hard { color: #b03a2a; }
+
+    .solved {
+      font-size: .72rem;
+      color: var(--success);
+      font-weight: 650;
+    }
+    .prog {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+    .card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 0 0 6px;
+      line-height: 1.3;
+    }
+    .card .meta {
+      color: var(--muted);
+      font-size: .8rem;
+      margin-bottom: 2px;
+    }
+    .card .meta.dim { opacity: .75; }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 0;
+      display: none;
+    }
+    .empty.show { display: block; }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 24px 0 40px;
+      color: var(--muted);
+      font-size: .82rem;
+      text-align: center;
+    }
+    footer span { color: var(--accent-text); }
+
+    /* Challenge detail (when shown via hash) */
+    .detail { display: none; }
+    .detail.active { display: block; }
+    .detail .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: .85rem;
+      margin: 24px 0 8px;
+    }
+    .detail .back:hover { color: var(--accent-text); }
+    .detail-header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 28px;
+      margin-bottom: 28px;
+    }
+    .detail-header .kicker {
+      color: var(--accent-text);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      font-size: .72rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .detail-header h1 {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 780;
+      margin: 0 0 14px;
+    }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .tag {
+      font-size: .72rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .desc {
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.6;
+    }
+    .section-title {
+      color: var(--accent-text);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: .7rem;
+      font-weight: 700;
+      margin: 28px 0 10px;
+    }
+    .files {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 18px;
+    }
+    .file-link {
+      color: var(--accent-text);
+      font-weight: 600;
+    }
+    .sha {
+      color: var(--muted);
+      font-size: .78rem;
+      margin-top: 4px;
+      word-break: break-all;
+    }
+    .answers {
+      margin-top: 8px;
+    }
+    .answer-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .answer-row:last-child { border-bottom: none; }
+    .q-num {
+      font-weight: 700;
+      color: var(--muted);
+      min-width: 28px;
+      padding-top: 8px;
+    }
+    .q-text {
+      flex: 1;
+      min-width: 200px;
+      padding-top: 8px;
+    }
+    .q-input {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .q-input input {
+      background: var(--field);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 9px 12px;
+      font: inherit;
+      min-width: 220px;
+      outline: none;
+    }
+    .q-input input:focus { border-color: var(--accent); }
+    .q-input button {
+      background: var(--accent);
+      color: #1a1200;
+      border: none;
+      border-radius: 6px;
+      padding: 9px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: .9rem;
+    }
+    .q-input button:hover { filter: brightness(1.08); }
+    .case-sensitive {
+      display: inline-block;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #e6b45722;
+      color: var(--accent-text);
+      margin-top: 4px;
+    }
+    .progress-bar {
+      height: 4px;
+      background: var(--line);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 6px;
+      max-width: 120px;
+    }
+    .progress-bar > div {
+      height: 100%;
+      background: var(--success);
+      width: 0%;
+      transition: width .3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <header class="event-bar">
+      <a class="event-name" href="./">CHICKEN0248 <span>CTF</span></a>
+      <div class="event-actions">
+        <a href="https://writeups.chicken0248.fyi" target="_blank" rel="noopener">Writeups</a>
+        <a href="https://chickenloner.github.io" target="_blank" rel="noopener">Portfolio</a>
+        <button class="theme-toggle" type="button" aria-pressed="false">Light theme</button>
+      </div>
+    </header>
+
+    <!-- HOME VIEW -->
+    <div id="home-view">
+      <section class="case-intro">
+        <div class="case-kicker">CHICKEN0248 CTF</div>
+        <h1>Challenges</h1>
+        <p>Free forensics and security challenges. Download the evidence, answer the questions, submit to check.</p>
+        <p>No account needed; your progress is saved in this browser.</p>
+      </section>
+
+      <div class="toolbar">
+        <input type="search" id="q" placeholder="Search challenges" autocomplete="off">
+        <select id="cat">
+          <option value="">All categories</option>
+          <option>Network Forensics</option>
+          <option>Endpoint Forensics</option>
+          <option>Reverse Engineering</option>
+          <option>Malware Analysis</option>
+        </select>
+        <select id="diff">
+          <option value="">All difficulties</option>
+          <option value="easy">easy</option>
+          <option value="medium">medium</option>
+          <option value="hard">hard</option>
+        </select>
+        <span class="count" id="count">15 / 15</span>
+      </div>
+
+      <div class="grid" id="grid">
+        <!-- Cards injected by JS -->
+      </div>
+      <p id="empty" class="empty">No challenges match.</p>
+    </div>
+
+    <!-- DETAIL VIEW -->
+    <div id="detail-view" class="detail">
+      <a href="#" class="back" id="back-btn">← Back to challenges</a>
+      <div class="detail-header">
+        <div class="kicker" id="d-kicker"></div>
+        <h1 id="d-title"></h1>
+        <div class="tags" id="d-tags"></div>
+        <p class="desc" id="d-desc"></p>
+      </div>
+
+      <div class="section-title">Evidence</div>
+      <h3 style="margin:0 0 10px;font-size:1.15rem">Files</h3>
+      <div class="files">
+        <a class="file-link" href="#" id="d-file" onclick="return false;">Evidence.zip</a>
+        <div class="sha" id="d-sha">sha256: (placeholder — download from original site)</div>
+      </div>
+
+      <div class="section-title">Response sheet</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="margin:0;font-size:1.15rem">Submit your answers</h3>
+        <div style="text-align:right">
+          <span id="d-accepted" style="color:var(--muted);font-size:.85rem">0 / 0 accepted</span>
+          <div class="progress-bar"><div id="d-progress"></div></div>
+        </div>
+      </div>
+      <div class="answers" id="d-answers">
+        <!-- Answer rows injected -->
+      </div>
+    </div>
+
+    <footer>
+      Free to play. Be kind, don't share flags. <span>ctf.chicken0248.fyi (clone)</span>
+    </footer>
+  </div>
+
+  <script>
+    // ========== Challenge data (exact from original) ==========
+    const challenges = [
+      {
+        slug: "backward-compatible",
+        title: "Backward Compatible",
+        cat: "Network Forensics",
+        event: "Thailand Cyber Top Talent 2026",
+        diff: "easy",
+        qs: 1,
+        tags: ["by Chicken0248", "Cryptography", "TLS"],
+        desc: "A legacy application server was temporarily restored to service during an infrastructure migration. Shortly afterward, monitoring detected an unexpected connection between the server and an external system. Administrators confirmed that the application was configured to use encrypted communications and found no evidence that credentials or sensitive files were transmitted in cleartext. Investigators captured the relevant network activity before the system was isolated. Determine what was transferred."
+      },
+      {
+        slug: "false-sense-of-security",
+        title: "False Sense of Security",
+        cat: "Network Forensics",
+        event: "Thailand Cyber Top Talent 2026",
+        diff: "easy",
+        qs: 1,
+        tags: ["by Chicken0248", "Cryptography", "TLS", "FREAK"],
+        desc: "Following reports of possible information exposure, the security team identified suspicious communication between an employee workstation and an external server. The system owner dismissed the concern, stating that the communication was encrypted and no sensitive information should have been visible on the network. A packet capture from the affected network segment has been preserved for further investigation. Determine what information was exposed."
+      },
+      {
+        slug: "shaw",
+        title: "SHAW",
+        cat: "Endpoint Forensics",
+        event: "STDiO CTF 2025",
+        diff: "easy",
+        qs: 5,
+        tags: ["by Chicken0248", "Windows Forensics", "Log Analysis", "Browser"],
+        desc: "One day in Pharloom, Hornet received advice from Lady Lace to visit a mysterious website in order to uncover the real truth about Pharloom. Hornet followed the suggestion and entered the site, but something unexpected happened. What exactly happened to Hornet?"
+      },
+      {
+        slug: "the-weakest-link",
+        title: "The Weakest Link",
+        cat: "Network Forensics",
+        event: "Thailand Cyber Top Talent 2026",
+        diff: "easy",
+        qs: 1,
+        tags: ["by Chicken0248", "Network", "Protocol"],
+        desc: "A suspicious network connection was observed between an internal host and an external system. Investigators captured the traffic for analysis. Identify the weak link that allowed the communication."
+      },
+      {
+        slug: "as-a-representative",
+        title: "AS a REPresentative!",
+        cat: "Network Forensics",
+        event: "Women Thailand Cyber Top Talent 2025",
+        diff: "medium",
+        qs: 1,
+        tags: ["by Chicken0248", "BGP", "Network"],
+        desc: "During a routing incident investigation, anomalous BGP-related traffic was observed. Analyze the capture and determine what happened."
+      },
+      {
+        slug: "hotdog",
+        title: "HotDog",
+        cat: "Network Forensics",
+        event: "Women Thailand Cyber Top Talent 2025",
+        diff: "medium",
+        qs: 1,
+        tags: ["by Chicken0248", "Network Forensics"],
+        desc: "A network capture from a suspicious session has been provided. Analyze the traffic and recover the relevant information."
+      },
+      {
+        slug: "phantom-packets",
+        title: "Phantom Packets",
+        cat: "Network Forensics",
+        event: "Thailand Cyber Top Talent 2026",
+        diff: "medium",
+        qs: 1,
+        tags: ["by Chicken0248", "Network", "PCAP"],
+        desc: "Strange packets appeared on the network that should not have been there. Investigate the capture and find out what was happening."
+      },
+      {
+        slug: "shadow-council",
+        title: "Shadow Council",
+        cat: "Endpoint Forensics",
+        event: "Thailand Cyber Top Talent 2026",
+        diff: "medium",
+        qs: 1,
+        tags: ["by Chicken0248", "Windows", "Forensics"],
+        desc: "An endpoint was compromised. Analyze the forensic artifacts and uncover the actions of the Shadow Council."
+      },
+      {
+        slug: "you-know-the-rules",
+        title: "You Know The Rules",
+        cat: "Reverse Engineering",
+        event: "Women Thailand Cyber Top Talent 2025",
+        diff: "medium",
+        qs: 1,
+        tags: ["by Chicken0248", "Reverse", "RE"],
+        desc: "You know the rules, and so do I. Reverse the binary and extract the flag."
+      },
+      {
+        slug: "bamboozled",
+        title: "BAMBOOZLED",
+        cat: "Malware Analysis",
+        event: "STDiO CTF 2026",
+        diff: "hard",
+        qs: 1,
+        tags: ["by Chicken0248", "Malware", "Analysis"],
+        desc: "A suspicious sample has been recovered. Analyze the malware and determine its behavior and objectives."
+      },
+      {
+        slug: "clickbridge",
+        title: "ClickBridge",
+        cat: "Network Forensics",
+        event: "STDiO CTF 2026",
+        diff: "hard",
+        qs: 15,
+        tags: ["by Chicken0248", "Network Forensics", "PCAP"],
+        desc: "A complex network investigation involving multiple stages. Download the evidence and answer all 15 questions carefully."
+      },
+      {
+        slug: "command-control-conceal",
+        title: "Command Control Conceal",
+        cat: "Network Forensics",
+        event: "Thailand Cyber Top Talent 2026",
+        diff: "hard",
+        qs: 1,
+        tags: ["by Chicken0248", "C2", "Network"],
+        desc: "Command-and-control traffic was detected. Analyze the communication and uncover how the operator concealed their activity."
+      },
+      {
+        slug: "master-investigator",
+        title: "Master Investigator",
+        cat: "Endpoint Forensics",
+        event: "STDiO CTF 2025",
+        diff: "hard",
+        qs: 15,
+        tags: ["by Chicken0248", "Windows Forensics", "Timeline"],
+        desc: "A full endpoint investigation is required. Examine the artifacts thoroughly and answer all 15 questions to prove you are a Master Investigator."
+      },
+      {
+        slug: "resident-devil",
+        title: "Resident Devil",
+        cat: "Endpoint Forensics",
+        event: "Thailand Cyber Top Talent 2026",
+        diff: "hard",
+        qs: 1,
+        tags: ["by Chicken0248", "Endpoint", "Persistence"],
+        desc: "A persistent threat was found on the system. Investigate the artifacts and identify the Resident Devil."
+      },
+      {
+        slug: "whispers-on-the-wire",
+        title: "Whispers on the Wire",
+        cat: "Malware Analysis",
+        event: "STDiO CTF 2026",
+        diff: "hard",
+        qs: 1,
+        tags: ["by Chicken0248", "Malware", "Network", "C2"],
+        desc: "Malware was communicating quietly over the network. Analyze the sample and the traffic to understand the whispers on the wire."
+      }
+    ];
+
+    // ========== Theme ==========
+    const themeBtn = document.querySelector('.theme-toggle');
+    function setTheme(t) {
+      document.documentElement.dataset.theme = t;
+      themeBtn.textContent = t === 'light' ? 'Dark theme' : 'Light theme';
+      themeBtn.setAttribute('aria-pressed', String(t === 'light'));
+    }
+    setTheme(document.documentElement.dataset.theme || 'dark');
+    themeBtn.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      setTheme(next);
+      try { localStorage.setItem('ctf-theme', next); } catch {}
+    });
+
+    // ========== Progress helpers ==========
+    function getProgress(slug, total) {
+      let solved = 0;
+      for (let i = 1; i <= total; i++) {
+        if (localStorage.getItem(`ctf:${slug}:q${i}`) === '1') solved++;
+      }
+      return solved;
+    }
+
+    // ========== Render home cards ==========
+    const grid = document.getElementById('grid');
+    const emptyEl = document.getElementById('empty');
+    const countEl = document.getElementById('count');
+
+    function renderCards() {
+      const q = document.getElementById('q').value.trim().toLowerCase();
+      const cat = document.getElementById('cat').value;
+      const diff = document.getElementById('diff').value;
+
+      let visible = 0;
+      grid.innerHTML = '';
+
+      challenges.forEach(c => {
+        const text = `${c.title} ${c.cat} ${c.event} ${c.tags.join(' ')}`.toLowerCase();
+        const match = (!q || text.includes(q)) &&
+                      (!cat || c.cat === cat) &&
+                      (!diff || c.diff === diff);
+        if (!match) return;
+        visible++;
+
+        const solved = getProgress(c.slug, c.qs);
+        const isDone = solved === c.qs;
+        const hasPartial = solved > 0 && !isDone;
+
+        const card = document.createElement('a');
+        card.className = 'card' + (isDone ? ' done' : '');
+        card.href = `#${c.slug}`;
+        card.dataset.slug = c.slug;
+        card.innerHTML = `
+          <div class="row">
+            <span class="pill ${c.diff}">${c.diff}</span>
+            ${isDone ? '<span class="solved">✓ solved</span>' : ''}
+            ${hasPartial ? `<span class="prog">${solved}/${c.qs}</span>` : ''}
+          </div>
+          <h3>${c.title}</h3>
+          <div class="meta">${c.cat} · ${c.event}</div>
+          <div class="meta dim">${c.qs} question${c.qs > 1 ? 's' : ''}</div>
+        `;
+        grid.appendChild(card);
+      });
+
+      countEl.textContent = `${visible} / ${challenges.length}`;
+      emptyEl.classList.toggle('show', visible === 0);
+    }
+
+    ['q', 'cat', 'diff'].forEach(id => {
+      document.getElementById(id).addEventListener('input', renderCards);
+    });
+
+    // ========== Detail view ==========
+    const homeView = document.getElementById('home-view');
+    const detailView = document.getElementById('detail-view');
+
+    function showDetail(slug) {
+      const c = challenges.find(x => x.slug === slug);
+      if (!c) return;
+
+      homeView.style.display = 'none';
+      detailView.classList.add('active');
+
+      document.getElementById('d-kicker').textContent = `${c.event.toUpperCase()} · ${c.cat.toUpperCase()}`;
+      document.getElementById('d-title').textContent = c.title;
+
+      const tagsEl = document.getElementById('d-tags');
+      tagsEl.innerHTML = `<span class="pill ${c.diff}">${c.diff}</span>` +
+        c.tags.map(t => `<span class="tag">${t}</span>`).join('');
+
+      document.getElementById('d-desc').textContent = c.desc;
+      document.getElementById('d-file').textContent = `${c.title.replace(/[^a-z0-9]/gi, '_')}_Player.zip`;
+      document.getElementById('d-sha').textContent = 'sha256: (download the real file from the original site)';
+
+      const answersEl = document.getElementById('d-answers');
+      answersEl.innerHTML = '';
+      let solved = 0;
+
+      for (let i = 1; i <= c.qs; i++) {
+        const isSolved = localStorage.getItem(`ctf:${c.slug}:q${i}`) === '1';
+        if (isSolved) solved++;
+
+        const row = document.createElement('div');
+        row.className = 'answer-row';
+        row.innerHTML = `
+          <div class="q-num">${String(i).padStart(2, '0')}</div>
+          <div class="q-text">
+            ${c.qs === 1 ? 'Flag' : `Question ${i}`}
+            <div class="case-sensitive">CASE-SENSITIVE</div>
+          </div>
+          <div class="q-input">
+            <input type="text" placeholder="${c.qs === 1 ? 'FLAG{...}' : 'answer'}" data-q="${i}" ${isSolved ? 'disabled' : ''}>
+            <button type="button" data-q="${i}" ${isSolved ? 'disabled' : ''}>${isSolved ? '✓' : 'Submit'}</button>
+          </div>
+        `;
+        answersEl.appendChild(row);
+      }
+
+      document.getElementById('d-accepted').textContent = `${solved} / ${c.qs} accepted`;
+      document.getElementById('d-progress').style.width = `${(solved / c.qs) * 100}%`;
+
+      // Submit handlers (local only — marks as solved for progress)
+      answersEl.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const qn = btn.dataset.q;
+          const input = answersEl.querySelector(`input[data-q="${qn}"]`);
+          if (!input.value.trim()) {
+            input.focus();
+            return;
+          }
+          // In this clone we just mark it as "submitted" for progress tracking.
+          // Real checking would require the actual answers.
+          localStorage.setItem(`ctf:${c.slug}:q${qn}`, '1');
+          btn.textContent = '✓';
+          btn.disabled = true;
+          input.disabled = true;
+          const newSolved = getProgress(c.slug, c.qs);
+          document.getElementById('d-accepted').textContent = `${newSolved} / ${c.qs} accepted`;
+          document.getElementById('d-progress').style.width = `${(newSolved / c.qs) * 100}%`;
+        });
+      });
+    }
+
+    function showHome() {
+      detailView.classList.remove('active');
+      homeView.style.display = 'block';
+      renderCards();
+    }
+
+    document.getElementById('back-btn').addEventListener('click', (e) => {
+      e.preventDefault();
+      location.hash = '';
+      showHome();
+    });
+
+    // Hash routing
+    function handleHash() {
+      const slug = location.hash.slice(1);
+      if (slug && challenges.some(c => c.slug === slug)) {
+        showDetail(slug);
+      } else {
+        showHome();
+      }
+    }
+
+    window.addEventListener('hashchange', handleHash);
+    renderCards();
+    handleHash();
+  </script>
+</body>
+</html>
